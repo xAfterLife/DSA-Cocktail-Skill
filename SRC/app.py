@@ -1,20 +1,21 @@
-from flask import Flask
-from pymongo import MongoClient
-from ask_sdk_core.skill_builder import SkillBuilder
-from flask_ask_sdk.skill_adapter import SkillAdapter
-from ask_sdk_core.dispatch_components import AbstractRequestHandler
-from ask_sdk_core.dispatch_components import AbstractExceptionHandler
-from ask_sdk_core.utils import is_request_type, is_intent_name
-from ask_sdk_core.handler_input import HandlerInput
-from ask_sdk_model.ui import SimpleCard
-from ask_sdk_model import Response
+from SDK.FLASK.flask import Flask
+from SDK.PYMONGO.pymongo import MongoClient
+from SDK.ASK.ask_sdk_core.skill_builder import SkillBuilder
+from SDK.FLASKASK.flask_ask_sdk.skill_adapter import SkillAdapter
+from SDK.ASK.ask_sdk_core.dispatch_components import AbstractRequestHandler
+from SDK.ASK.ask_sdk_core.dispatch_components import AbstractExceptionHandler
+from SDK.ASK.ask_sdk_core.utils import is_request_type, is_intent_name
+from SDK.ASK.ask_sdk_core.handler_input import HandlerInput
+from SDK.ASK.ask_sdk_model.ui import SimpleCard
+from SDK.ASK.ask_sdk_model import Response
 
 app = Flask(__name__)
 
 client = MongoClient(port=27017)
-db=client.local
+db = client.local
 
 sb = SkillBuilder()
+
 
 class LaunchRequestHandler(AbstractRequestHandler):
     """Handler for Skill Launch."""
