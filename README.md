@@ -6,7 +6,7 @@ Amazon Alexa Skill for Cocktails
 ## Authors
 
 - [@xAfterLife](https://www.github.com/xAfterLife)
-- [@Platzhalter](https://www.github.com/Platzhalter)
+- [@xLedian98](https://www.github.com/xLedian98)
 - [@Platzhalter](https://www.github.com/Platzhalter)
 
 
