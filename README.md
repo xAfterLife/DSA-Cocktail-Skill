@@ -7,7 +7,7 @@ Amazon Alexa Skill for Cocktails
 
 - [@xAfterLife](https://www.github.com/xAfterLife)
 - [@Ledian98](https://www.github.com/Ledian98)
-- [@Platzhalter](https://www.github.com/Platzhalter)
+- [@Lilosnc](https://www.github.com/Lilosnc)
 
 
 ## Badges
