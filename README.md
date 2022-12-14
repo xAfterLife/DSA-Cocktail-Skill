@@ -1,6 +1,6 @@
 # DSA-Cocktail-Skill
 
-Amazon Alexa Skill for Cocktails
+Amazon Alexa Skill for Cocktails and more
 
 
 ## Authors
