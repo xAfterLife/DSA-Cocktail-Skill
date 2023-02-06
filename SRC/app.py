@@ -5,6 +5,7 @@
 # session persistence, api calls, and more.
 # This sample is built using the handler classes approach in skill builder.
 import logging
+import traceback
 import ask_sdk_core.utils as ask_utils
 import requests
 
@@ -28,7 +29,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Welcome, you can say Hello or Help. Which would you like to try?"
+        speak_output = "Wir sind drinne, ma dude"
 
         return (
             handler_input.response_builder
@@ -56,32 +57,29 @@ class HelloWorldIntentHandler(AbstractRequestHandler):
         )
 
 class RandomCocktailIntentHandler(AbstractRequestHandler):
-    """Handler for Random Cocktail Intent."""
-    def get_random_cocktail():
-        response = requests.get('https://www.thecocktaildb.com/api/json/v1/1/random.php%27')
-
-        if response.status_code == 200:
-            data = response.json()
-        return data['drinks'][0]['strDrink']
-    
+    """Handler for Random Cocktail Intent."""    
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("RandomCocktailIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-    cocktail = get_random_cocktail()
+        cocktail = self.get_random_cocktail()
+        speak_output = 'Der zufällige Cocktail, den ich für dich gefunden habe, ist {}.'.format(cocktail)
+        
+        # Erstelle eine Antwort für Alexa, die den Namen des Cocktails enthält
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
 
-  # Erstelle eine Antwort für Alexa, die den Namen des Cocktails enthält
-    response = {
-    'version': '1.0',
-    'response': {
-      'outputSpeech': {
-        'type': 'PlainText',
-        'text': 'Der zufällige Cocktail, den ich für dich gefunden habe, ist {}.'.format(cocktail)
-            }
-        }
-    }
-    return response
+    def get_random_cocktail(self):
+        response = requests.get('https://www.thecocktaildb.com/api/json/v1/1/random.php')
+
+        if response.status_code == 200:
+            data = response.json()
+        return data['drinks'][0]['strDrink']
 
 class HelpIntentHandler(AbstractRequestHandler):
     """Handler for Help Intent."""
@@ -180,9 +178,9 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 
     def handle(self, handler_input, exception):
         # type: (HandlerInput, Exception) -> Response
-        logger.error(exception, exc_info=True)
+        logger.error(traceback.format_exc(), exc_info=True)
 
-        speak_output = "Sorry, I had trouble doing what you asked. Please try again."
+        speak_output = str(exception)
 
         return (
             handler_input.response_builder
@@ -200,7 +198,10 @@ sb = SkillBuilder()
 
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(HelloWorldIntentHandler())
+
+# Add Intent Modules
 sb.add_request_handler(RandomCocktailIntentHandler())
+
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
