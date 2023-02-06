@@ -1,0 +1,38 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "mini bar",
+            "intents": [{
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "RandomCocktailIntent",
+                    "slots": [],
+                    "samples": [
+                        "Ich brauche einen Cocktail",
+                        "Ich hatte einen schlechten Tag",
+                        "Gib mir einen zufälligen Cocktail"
+                    ]
+                }
+            ],
+            "types": []
+        }
+    }
+}
