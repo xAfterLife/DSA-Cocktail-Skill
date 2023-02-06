@@ -52,19 +52,21 @@ class HelloWorldIntentHandler(AbstractRequestHandler):
         return (
             handler_input.response_builder
                 .speak(speak_output)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
+                .ask("add a reprompt if you want to keep the session open for the user to respond")
                 .response
         )
 
 class RandomCocktailIntentHandler(AbstractRequestHandler):
-    """Handler for Random Cocktail Intent."""    
+    """Handler for Random Cocktail Intent."""
+    drink_name = ''
+
     def can_handle(self, handler_input):
         return ask_utils.is_intent_name("RandomCocktailIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        cocktail = self.get_random_cocktail()
-        speak_output = 'Der zufällige Cocktail, den ich für dich gefunden habe, ist {}.'.format(cocktail)
+        self.drink_name = self.get_random_cocktail()
+        speak_output = f'Der zufällige Cocktail, den ich für dich gefunden habe, ist {self.drink_name}.'
         
         # Erstelle eine Antwort für Alexa, die den Namen des Cocktails enthält
         return (
@@ -73,6 +75,16 @@ class RandomCocktailIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
+
+    def cocktail_rezept(self):
+        response = requests.get(f"https://www.thecocktaildb.com/api/json/v1/1/search.php?s={self.drink_name}")
+        data = response.json()
+
+        if response.status_code == 200:
+            recipe = data["drinks"][0]["strInstructions"]
+
+        return (f"Das Rezept für einen {self.drink_name}: {recipe}")
+
 
     def get_random_cocktail(self):
         response = requests.get('https://www.thecocktaildb.com/api/json/v1/1/random.php')
