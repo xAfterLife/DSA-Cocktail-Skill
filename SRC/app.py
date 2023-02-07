@@ -19,6 +19,8 @@ from ask_sdk_model import Response
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+drink_name = str("")
+
 
 class LaunchRequestHandler(AbstractRequestHandler):
     """Handler for Skill Launch."""
@@ -56,19 +58,16 @@ class HelloWorldIntentHandler(AbstractRequestHandler):
                 .response
         )
 
-class RandomCocktailIntentHandler(AbstractRequestHandler):
+class InstructionIntentHandler(AbstractRequestHandler):
     """Handler for Random Cocktail Intent."""
-    drink_name = ''
 
     def can_handle(self, handler_input):
-        return ask_utils.is_intent_name("RandomCocktailIntent")(handler_input)
+        return ask_utils.is_intent_name("InstructionIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        self.drink_name = self.get_random_cocktail()
-        speak_output = f'Der zufällige Cocktail, den ich für dich gefunden habe, ist {self.drink_name}.'
+        speak_output = self.cocktail_rezept()
         
-        # Erstelle eine Antwort für Alexa, die den Namen des Cocktails enthält
         return (
             handler_input.response_builder
                 .speak(speak_output)
@@ -77,14 +76,37 @@ class RandomCocktailIntentHandler(AbstractRequestHandler):
         )
 
     def cocktail_rezept(self):
-        response = requests.get(f"https://www.thecocktaildb.com/api/json/v1/1/search.php?s={self.drink_name}")
+        global drink_name
+
+        uri = f"https://www.thecocktaildb.com/api/json/v1/1/search.php?s={drink_name}".replace(" ", "%20")
+        response = requests.get(uri)
         data = response.json()
 
         if response.status_code == 200:
             recipe = data["drinks"][0]["strInstructions"]
 
-        return (f"Das Rezept für einen {self.drink_name}: {recipe}")
+        return (f"Das Rezept für einen {drink_name}: {recipe}")
 
+class RandomCocktailIntentHandler(AbstractRequestHandler):
+    """Handler for Random Cocktail Intent."""
+
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("RandomCocktailIntent")(handler_input)
+
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        global drink_name
+        drink_name = self.get_random_cocktail()
+
+        speak_output = f'Der zufällige Cocktail, den ich für dich gefunden habe, ist {drink_name}.'
+        
+        # Erstelle eine Antwort für Alexa, die den Namen des Cocktails enthält
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
 
     def get_random_cocktail(self):
         response = requests.get('https://www.thecocktaildb.com/api/json/v1/1/random.php')
@@ -152,6 +174,7 @@ class SessionEndedRequestHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
 
         # Any cleanup logic goes here.
+        drink_name = ''
 
         return handler_input.response_builder.response
 
@@ -213,6 +236,7 @@ sb.add_request_handler(HelloWorldIntentHandler())
 
 # Add Intent Modules
 sb.add_request_handler(RandomCocktailIntentHandler())
+sb.add_request_handler(InstructionIntentHandler())
 
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
