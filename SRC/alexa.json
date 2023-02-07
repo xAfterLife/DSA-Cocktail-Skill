@@ -2,7 +2,8 @@
     "interactionModel": {
         "languageModel": {
             "invocationName": "mini bar",
-            "intents": [{
+            "intents": [
+                {
                     "name": "AMAZON.CancelIntent",
                     "samples": []
                 },
@@ -26,9 +27,16 @@
                     "name": "RandomCocktailIntent",
                     "slots": [],
                     "samples": [
-                        "Ich brauche einen Cocktail",
-                        "Ich hatte einen schlechten Tag",
-                        "Gib mir einen zufälligen Cocktail"
+                        "Zufälliger Cocktail",
+                        "Ich hatte einen schlechten Tag"
+                    ]
+                },
+                {
+                    "name": "InstructionIntent",
+                    "slots": [],
+                    "samples": [
+                        "Wie mache ich den Cocktail",
+                        "Rezept für den Cocktail"
                     ]
                 }
             ],

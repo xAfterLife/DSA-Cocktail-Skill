@@ -19,6 +19,8 @@ from ask_sdk_model import Response
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
+# Hier definiere ich die Variablen für die "Session"
 drink_name = str("")
 
 
