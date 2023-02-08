@@ -8,15 +8,27 @@
                 },
                 {
                     "name": "AMAZON.HelpIntent",
-                    "samples": []
+                    "samples": [
+                        "Hilfe",
+                        "Was kann dieser Skill",
+                        "Befehle"
+                    ]
                 },
                 {
                     "name": "AMAZON.StopIntent",
-                    "samples": []
+                    "samples": [
+                        "Stop",
+                        "Fertig",
+                        "Anhalten",
+                        "Genug"
+                    ]
                 },
                 {
                     "name": "AMAZON.NavigateHomeIntent",
-                    "samples": []
+                    "samples": [
+                        "Zurück",
+                        "Home"
+                    ]
                 },
                 {
                     "name": "AMAZON.FallbackIntent",
@@ -26,6 +38,8 @@
                     "name": "RandomCocktailIntent",
                     "slots": [],
                     "samples": [
+                        "Alkoholhaltig",
+                        "Zufälliger Alkoholischer Cocktail",
                         "Zufälliger Cocktail",
                         "Ich hatte einen schlechten Tag"
                     ]
@@ -35,7 +49,11 @@
                     "slots": [],
                     "samples": [
                         "Wie mache ich den Cocktail",
-                        "Rezept"
+                        "Rezept",
+                        "Anleitung",
+                        "Anleitung für diesen Cocktail",
+                        "Wie mache ich ",
+                        "Wie geht das"
                     ]
                 },
                 {
@@ -45,7 +63,10 @@
                         "Was brauche ich",
                         "Inhaltsstoffe",
                         "Was sind die Inhaltsstoffe",
-                        "Was ist in diesem Cocktail"
+                        "Was ist in diesem Cocktail",
+                        "Zutaten",
+                        "Welche Zutaten ",
+                        "Welche Zutaten brauche ich"
                     ]
                 },
                 {
@@ -72,6 +93,15 @@
                         "Worin ist {Ingredient}",
                         "Was hat {Ingredient} ",
                         "Ich möchte einen Cocktail mit {Ingredient}"
+                    ]
+                },
+                {
+                    "name": "NonAlcoholicRandomIntent",
+                    "slots": [],
+                    "samples": [
+                        "Ich bin fahrer",
+                        "Alkoholfreier Cocktail",
+                        "Alkoholfrei"
                     ]
                 }
             ],

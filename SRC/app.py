@@ -3,6 +3,7 @@ import logging
 import traceback
 import ask_sdk_core.utils as ask_utils
 import requests
+import random
 
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
@@ -18,6 +19,35 @@ logger.setLevel(logging.INFO)
 # Hier definiere ich die Variablen für die "Session"
 current_drink = None
 
+def data_from_response(response):
+    if response.status_code == 200:
+        data = response.json()
+        if data['drinks'] is None:
+            data = None
+    return data
+
+def get_random_cocktail(url):
+    response = requests.get(url.replace(" ", "%20"))
+    data = data_from_response(response)
+
+    if data != None:
+        id_Drink = data['drinks'][random.randint(0, len(data['drinks']) - 1)]['idDrink']
+        response = requests.get(f'https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i={id_Drink}'.replace(" ", "%20"))
+        data = data_from_response(response)
+    return data
+
+def get_user_name(handler_input):
+    access_token = handler_input.request_envelope.context.system.user.access_token
+
+    if access_token:
+        api_endpoint = 'https://api.amazonalexa.com/v2/accounts/~current/settings/Profile.name'
+        headers = { "Authorization": f"Bearer {access_token}" }
+        response = requests.get(api_endpoint, headers=headers)
+
+        if response.status_code == 200:
+            return response.json().get("first_name")
+    return None
+
 
 class LaunchRequestHandler(AbstractRequestHandler):
     """Handler for Skill Launch."""
@@ -28,7 +58,11 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Wir sind drinne, ma dude"
+        username = get_user_name(handler_input)
+        if username is None:
+            speak_output = "Wir sind drinne, ma dude"
+        else:
+            speak_output = f"{username} ma dude, we're in"
 
         return (
             handler_input.response_builder
@@ -61,14 +95,18 @@ class IngredientIntentHandler(AbstractRequestHandler):
     
     def get_ingredients(self):
         drink_name = current_drink['drinks'][0]['strDrink']
-        ingredients = ""
+        output = ""
 
         for i in range(1,16):
             ingredient_field = "strIngredient" + str(i)
             ingredient = current_drink["drinks"][0].get(ingredient_field, "")
-            if ingredient:
-                ingredients += ingredient + "; "
-        return f"Inhaltsstoffe für einen {drink_name}: " + ingredients
+
+            measurement_field = "strMeasure" + str(i)
+            measure = current_drink["drinks"][0].get(measurement_field, "")
+
+            if ingredient and measure:
+                output += f"{measure} {ingredient}; "
+        return f"Inhaltsstoffe für einen {drink_name}: " + output
 
 
 class InstructionIntentHandler(AbstractRequestHandler):
@@ -104,19 +142,19 @@ class InstructionIntentHandler(AbstractRequestHandler):
             recipe = current_drink["drinks"][0]["strInstructionsDE"]
         return (f"Das Rezept für einen {drink_name}: {recipe}")
 
-class RandomCocktailIntentHandler(AbstractRequestHandler):
+class NonAlcoholicRandomIntentHandler(AbstractRequestHandler):
     """Handler for Random Cocktail Intent."""
 
     def can_handle(self, handler_input):
-        return ask_utils.is_intent_name("RandomCocktailIntent")(handler_input)
+        return ask_utils.is_intent_name("NonAlcoholicRandomIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         global current_drink
-        current_drink = self.get_random_cocktail()
+        current_drink = get_random_cocktail("https://www.thecocktaildb.com/api/json/v1/1/filter.php?a=Non_Alcoholic")
         drink_name = current_drink['drinks'][0]['strDrink']
 
-        speak_output = f'Der zufällige Cocktail, den ich für dich gefunden habe, ist {drink_name}.'
+        speak_output = f'Der zufällige Alkoholfreie Cocktail, den ich für dich gefunden habe, ist {drink_name}.'
         
         # Erstelle eine Antwort für Alexa, die den Namen des Cocktails enthält
         return (
@@ -126,12 +164,27 @@ class RandomCocktailIntentHandler(AbstractRequestHandler):
                 .response
         )
 
-    def get_random_cocktail(self):
-        response = requests.get('https://www.thecocktaildb.com/api/json/v1/1/random.php')
+class RandomCocktailIntentHandler(AbstractRequestHandler):
+    """Handler for Random Cocktail Intent."""
 
-        if response.status_code == 200:
-            data = response.json()
-        return data #['drinks'][0]['strDrink']
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("RandomCocktailIntent")(handler_input)
+
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        global current_drink
+        current_drink = get_random_cocktail("https://www.thecocktaildb.com/api/json/v1/1/filter.php?a=Alcoholic")
+        drink_name = current_drink['drinks'][0]['strDrink']
+
+        speak_output = f'Der zufällige Alkoholhaltige Cocktail, den ich für dich gefunden habe, ist {drink_name}.'
+        
+        # Erstelle eine Antwort für Alexa, die den Namen des Cocktails enthält
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
 
 class GetByIngredientIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
@@ -141,7 +194,7 @@ class GetByIngredientIntentHandler(AbstractRequestHandler):
         global current_drink
 
         ingridient = handler_input.request_envelope.request.intent.slots["Ingredient"].value
-        current_drink = self.cocktail_from_ingredient(ingridient)
+        current_drink = get_random_cocktail(f"https://www.thecocktaildb.com/api/json/v1/1/filter.php?i={ingridient}".replace(" ", "%20"))
 
         if current_drink == None:
             speak_output = f"Kein Cocktail mit {ingridient} gefunden, versuche deinen Inhaltsstoff auf Englisch zu suchen"
@@ -155,15 +208,6 @@ class GetByIngredientIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-    
-    def cocktail_from_ingredient(self, ingridient):
-        response = requests.get(f"https://www.thecocktaildb.com/api/json/v1/1/filter.php?i={ingridient}".replace(" ", "%20"))
-        id_Drink = response.sjon()['drinks'][0]['idDrink']
-        response = requests.get(f'https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i={id_Drink}'.replace(" ", "%20"))
-
-        if response.status_code == 200:
-            data = response.json()
-        return data #['drinks'][0]['strDrink']
 
 class GetCocktailNameIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
@@ -174,8 +218,11 @@ class GetCocktailNameIntentHandler(AbstractRequestHandler):
 
         drink_name = handler_input.request_envelope.request.intent.slots["Cocktail_Name"].value
         current_drink = self.cocktail_from_name(drink_name)
-
-        speak_output = f"Du hast den Cocktail {drink_name} ausgewählt."
+        
+        if current_drink is None:
+            speak_output = f"{drink_name} nicht gefunden, versuche einen anderen Cocktail"
+        else:
+            speak_output = f"Du hast den Cocktail {drink_name} ausgewählt."
 
         return (
             handler_input.response_builder
@@ -186,10 +233,7 @@ class GetCocktailNameIntentHandler(AbstractRequestHandler):
     
     def cocktail_from_name(self, cocktail_name):
         response = requests.get(f'https://www.thecocktaildb.com/api/json/v1/1/search.php?s={cocktail_name}'.replace(" ", "%20"))
-
-        if response.status_code == 200:
-            data = response.json()
-        return data #['drinks'][0]['strDrink']
+        return data_from_response(response)
 
 class HelpIntentHandler(AbstractRequestHandler):
     """Handler for Help Intent."""
@@ -218,7 +262,7 @@ class CancelOrStopIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Goodbye!"
+        speak_output = "Bis zum nächsten mal"
 
         return (
             handler_input.response_builder
@@ -248,9 +292,10 @@ class SessionEndedRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
+        global current_drink
 
         # Any cleanup logic goes here.
-        drink_name = ''
+        current_drink = None
 
         return handler_input.response_builder.response
 
@@ -310,6 +355,7 @@ sb.add_request_handler(InstructionIntentHandler())
 sb.add_request_handler(IngredientIntentHandler())
 sb.add_request_handler(GetCocktailNameIntentHandler())
 sb.add_request_handler(GetByIngredientIntentHandler())
+sb.add_request_handler(NonAlcoholicRandomIntentHandler())
 
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
