@@ -2,8 +2,7 @@
     "interactionModel": {
         "languageModel": {
             "invocationName": "mini bar",
-            "intents": [
-                {
+            "intents": [{
                     "name": "AMAZON.CancelIntent",
                     "samples": []
                 },
@@ -36,7 +35,43 @@
                     "slots": [],
                     "samples": [
                         "Wie mache ich den Cocktail",
-                        "Rezept für den Cocktail"
+                        "Rezept"
+                    ]
+                },
+                {
+                    "name": "IngredientIntent",
+                    "slots": [],
+                    "samples": [
+                        "Was brauche ich",
+                        "Inhaltsstoffe",
+                        "Was sind die Inhaltsstoffe",
+                        "Was ist in diesem Cocktail"
+                    ]
+                },
+                {
+                    "name": "GetCocktailNameIntent",
+                    "slots": [{
+                        "name": "Cocktail_Name",
+                        "type": "AMAZON.Food"
+                    }],
+                    "samples": [
+                        "{Cocktail_Name}",
+                        "Ich trinke einen {Cocktail_Name}",
+                        "Ich will einen {Cocktail_Name}",
+                        "Ich nehme einen {Cocktail_Name}"
+                    ]
+                },
+                {
+                    "name": "GetByIngredientIntent",
+                    "slots": [{
+                        "name": "Ingredient",
+                        "type": "AMAZON.Food"
+                    }],
+                    "samples": [
+                        "Ich hab Lust auf {Ingredient}",
+                        "Worin ist {Ingredient}",
+                        "Was hat {Ingredient} ",
+                        "Ich möchte einen Cocktail mit {Ingredient}"
                     ]
                 }
             ],

@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-
-# This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK for Python.
-# Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
-# session persistence, api calls, and more.
-# This sample is built using the handler classes approach in skill builder.
 import logging
 import traceback
 import ask_sdk_core.utils as ask_utils
@@ -21,7 +16,7 @@ logger.setLevel(logging.INFO)
 
 
 # Hier definiere ich die Variablen für die "Session"
-drink_name = str("")
+current_drink = None
 
 
 class LaunchRequestHandler(AbstractRequestHandler):
@@ -42,23 +37,39 @@ class LaunchRequestHandler(AbstractRequestHandler):
                 .response
         )
 
+class IngredientIntentHandler(AbstractRequestHandler):
+    """Handler for Random Cocktail Intent."""
 
-class HelloWorldIntentHandler(AbstractRequestHandler):
-    """Handler for Hello World Intent."""
     def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return ask_utils.is_intent_name("HelloWorldIntent")(handler_input)
+        return ask_utils.is_intent_name("IngredientIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Hello World!"
+        global current_drink
+
+        if current_drink is None:
+            speak_output = "Um welchen Drink handelt es sich denn?"
+        else:
+            speak_output = self.get_ingredients()
 
         return (
             handler_input.response_builder
                 .speak(speak_output)
-                .ask("add a reprompt if you want to keep the session open for the user to respond")
+                .ask(speak_output)
                 .response
         )
+    
+    def get_ingredients(self):
+        drink_name = current_drink['drinks'][0]['strDrink']
+        ingredients = ""
+
+        for i in range(1,16):
+            ingredient_field = "strIngredient" + str(i)
+            ingredient = current_drink["drinks"][0].get(ingredient_field, "")
+            if ingredient:
+                ingredients += ingredient + "; "
+        return f"Inhaltsstoffe für einen {drink_name}: " + ingredients
+
 
 class InstructionIntentHandler(AbstractRequestHandler):
     """Handler for Random Cocktail Intent."""
@@ -68,8 +79,13 @@ class InstructionIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = self.cocktail_rezept()
-        
+        global current_drink
+
+        if current_drink is None:
+            speak_output = "Um welchen Drink handelt es sich denn?"
+        else:
+            speak_output = self.cocktail_rezept()
+
         return (
             handler_input.response_builder
                 .speak(speak_output)
@@ -78,15 +94,14 @@ class InstructionIntentHandler(AbstractRequestHandler):
         )
 
     def cocktail_rezept(self):
-        global drink_name
+        global current_drink
 
-        uri = f"https://www.thecocktaildb.com/api/json/v1/1/search.php?s={drink_name}".replace(" ", "%20")
-        response = requests.get(uri)
-        data = response.json()
+        drink_name = current_drink['drinks'][0]['strDrink']
 
-        if response.status_code == 200:
-            recipe = data["drinks"][0]["strInstructions"]
-
+        if(current_drink["drinks"][0]["strInstructionsDE"] is None):
+            recipe = current_drink["drinks"][0]["strInstructions"]
+        else:
+            recipe = current_drink["drinks"][0]["strInstructionsDE"]
         return (f"Das Rezept für einen {drink_name}: {recipe}")
 
 class RandomCocktailIntentHandler(AbstractRequestHandler):
@@ -97,8 +112,9 @@ class RandomCocktailIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        global drink_name
-        drink_name = self.get_random_cocktail()
+        global current_drink
+        current_drink = self.get_random_cocktail()
+        drink_name = current_drink['drinks'][0]['strDrink']
 
         speak_output = f'Der zufällige Cocktail, den ich für dich gefunden habe, ist {drink_name}.'
         
@@ -115,7 +131,65 @@ class RandomCocktailIntentHandler(AbstractRequestHandler):
 
         if response.status_code == 200:
             data = response.json()
-        return data['drinks'][0]['strDrink']
+        return data #['drinks'][0]['strDrink']
+
+class GetByIngredientIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("GetByIngredientIntent")(handler_input)
+
+    def handle(self, handler_input):
+        global current_drink
+
+        ingridient = handler_input.request_envelope.request.intent.slots["Ingredient"].value
+        current_drink = self.cocktail_from_ingredient(ingridient)
+
+        if current_drink == None:
+            speak_output = f"Kein Cocktail mit {ingridient} gefunden, versuche deinen Inhaltsstoff auf Englisch zu suchen"
+        else:
+            drink_name = current_drink['drinks'][0]['strDrink']
+            speak_output = f"Ein Vorschlag für einen Cocktail mit {ingridient} wäre ein {drink_name}"
+
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
+    
+    def cocktail_from_ingredient(self, ingridient):
+        response = requests.get(f"https://www.thecocktaildb.com/api/json/v1/1/filter.php?i={ingridient}".replace(" ", "%20"))
+        id_Drink = response.sjon()['drinks'][0]['idDrink']
+        response = requests.get(f'https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i={id_Drink}'.replace(" ", "%20"))
+
+        if response.status_code == 200:
+            data = response.json()
+        return data #['drinks'][0]['strDrink']
+
+class GetCocktailNameIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        return ask_utils.is_intent_name("GetCocktailNameIntent")(handler_input)
+
+    def handle(self, handler_input):
+        global current_drink
+
+        drink_name = handler_input.request_envelope.request.intent.slots["Cocktail_Name"].value
+        current_drink = self.cocktail_from_name(drink_name)
+
+        speak_output = f"Du hast den Cocktail {drink_name} ausgewählt."
+
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
+        )
+    
+    def cocktail_from_name(self, cocktail_name):
+        response = requests.get(f'https://www.thecocktaildb.com/api/json/v1/1/search.php?s={cocktail_name}'.replace(" ", "%20"))
+
+        if response.status_code == 200:
+            data = response.json()
+        return data #['drinks'][0]['strDrink']
 
 class HelpIntentHandler(AbstractRequestHandler):
     """Handler for Help Intent."""
@@ -226,26 +300,22 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
                 .response
         )
 
-# The SkillBuilder object acts as the entry point for your skill, routing all request and response
-# payloads to the handlers above. Make sure any new handlers or interceptors you've
-# defined are included below. The order matters - they're processed top to bottom.
-
-
 sb = SkillBuilder()
 
 sb.add_request_handler(LaunchRequestHandler())
-sb.add_request_handler(HelloWorldIntentHandler())
 
 # Add Intent Modules
 sb.add_request_handler(RandomCocktailIntentHandler())
 sb.add_request_handler(InstructionIntentHandler())
+sb.add_request_handler(IngredientIntentHandler())
+sb.add_request_handler(GetCocktailNameIntentHandler())
+sb.add_request_handler(GetByIngredientIntentHandler())
 
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
 sb.add_request_handler(SessionEndedRequestHandler())
-sb.add_request_handler(IntentReflectorHandler()) # make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
-
+sb.add_request_handler(IntentReflectorHandler())
 sb.add_exception_handler(CatchAllExceptionHandler())
 
 lambda_handler = sb.lambda_handler()
