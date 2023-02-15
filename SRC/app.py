@@ -60,9 +60,9 @@ class LaunchRequestHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         username = get_user_name(handler_input)
         if username is None:
-            speak_output = "Wir sind drinne, ma dude"
+            speak_output = "Wie kann ich helfen?"
         else:
-            speak_output = f"{username} ma dude, we're in"
+            speak_output = f"{username} wie kann ich helfen?"
 
         return (
             handler_input.response_builder
