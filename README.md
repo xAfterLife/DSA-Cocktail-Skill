@@ -4,11 +4,11 @@ Amazon Alexa Skill for Cocktails and more
 
 ## Dokumentation
 
-[Dokumentation](/blob/main/Dokumentation_Entwicklung_Digitaler_Sprachassistenten.pdf)
+[Dokumentation](/Dokumentation_Entwicklung_Digitaler_Sprachassistenten.pdf)
 
 ## Zeiterfassung
 
-[Zeiterfassung](/blob/main/Zeiterfassung.pdf)
+[Zeiterfassung](/Zeiterfassung.pdf)
 
 ## Authors
 
